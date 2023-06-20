@@ -19,7 +19,6 @@ def create_X_Y(ts: np.array, lag=1, n_ahead=1, target_index=0) -> tuple:
 
     X, Y = np.array(X), np.array(Y)
 
-    # Reshaping the X array to an RNN input shape 
     X = np.reshape(X, (X.shape[0], lag, n_features))
     return X, Y
 

@@ -5,7 +5,7 @@ from process_data import clean_data, transform_data
 
 data = clean_data('data_1.csv')
 
-# Number of lags (hours back) to use for models
+# Number of lags (day back) to use for models
 lag = 60
 # Steps ahead to forecast 
 n_ahead = 1

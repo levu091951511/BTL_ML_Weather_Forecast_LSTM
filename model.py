@@ -101,8 +101,6 @@ class NNMultistepModel():
         
         # Saving to original model attribute in the class
         self.model = empty_model
-        # self.save_model("model.h5")
-        
         # Returning the training history
         return history
     
