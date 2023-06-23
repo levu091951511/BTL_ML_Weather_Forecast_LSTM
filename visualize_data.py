@@ -3,15 +3,16 @@ from process_data import clean_data
 import matplotlib.pyplot as plt
 
 data = clean_data('data_1.csv')
-
 features = ['Temperature_Avg', 'Dew_Point_Avg', 'Humidity_Avg', 'Wind_Speed_Avg', 'Pressure_Avg']
 
-# plt.figure(figsize=(12, 8))
-# plt.plot('Date', 'Temperature_Avg', data=data)
-# plt.title('Hourly temperature graph')
-# plt.ylabel('Degrees in C')
-# plt.xlabel('Date')
-# plt.show()
+# biểu đồ nhiệt độ
+plt.figure(figsize=(12, 8))
+# plt.plot('Date', 'Temperature_Avg', data=data, linewidth=1)
+plt.bar('Date', 'Temperature_Avg', data=data)
+plt.title('Daily temperature graph')
+plt.ylabel('Degrees in C')
+plt.xlabel('Date')
+plt.show()
 
 plot_features = data[features]
 plot_features.index = data.Date

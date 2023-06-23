@@ -1,6 +1,5 @@
 import pandas as pd 
-import matplotlib.pyplot as plt 
-import seaborn as sns 
+import matplotlib.pyplot as plt  
 import datetime
 import numpy as np
 import random
@@ -19,6 +18,7 @@ def create_X_Y(ts: np.array, lag=1, n_ahead=1, target_index=0) -> tuple:
 
     X, Y = np.array(X), np.array(Y)
 
+    # Reshaping the X array to an RNN input shape 
     X = np.reshape(X, (X.shape[0], lag, n_features))
     return X, Y
 
@@ -44,7 +44,7 @@ def clean_data(filename):
     d['date'] = [x.date() for x in d['Date']]
     return d
 
-def transform_data(d, lag=60, n_ahead=1, test_share=0.1):
+def transform_data(d, lag=60, n_ahead=1, test_share=0.1, valid_share=0.1):
     # The features used in the modeling 
     features_final = ['Temperature_Avg', 'Dew_Point_Avg', 'Humidity_Avg', 'Wind_Speed_Avg', 'Pressure_Avg']
 
@@ -52,26 +52,29 @@ def transform_data(d, lag=60, n_ahead=1, test_share=0.1):
     ts = d[features_final]
     nrows = ts.shape[0]
 
-    # Spliting into train and test sets
-    train = ts[0:int(nrows * (1 - test_share))]
+    # Spliting into train, validation, and test sets
+    train = ts[0:int(nrows * (1 - test_share - valid_share))]
+    valid = ts[int(nrows * (1 - test_share - valid_share)):int(nrows * (1 - test_share))]
     test = ts[int(nrows * (1 - test_share)):]
-
 
     # Scaling the data 
     train_mean = train.mean()
     train_std = train.std()
 
     train = (train - train_mean) / train_std
+    valid = (valid - train_mean) / train_std
     test = (test - train_mean) / train_std
 
     # Creating the final scaled frame 
-    ts_s = pd.concat([train, test])
+    ts_s = pd.concat([train, valid, test])
 
     X, Y = create_X_Y(ts_s.values, lag=lag, n_ahead=n_ahead)
 
     n_ft = X.shape[2]
 
-    # Spliting into train and test sets 
-    Xtrain, Ytrain = X[0:int(X.shape[0] * (1 - test_share))], Y[0:int(X.shape[0] * (1 - test_share))]
-    Xval, Yval = X[int(X.shape[0] * (1 - test_share)):], Y[int(X.shape[0] * (1 - test_share)):]
-    return Xtrain, Ytrain, Xval, Yval, n_ft
+    # Spliting into train, validation, and test sets
+    Xtrain, Ytrain = X[0:int(X.shape[0] * (1 - test_share - valid_share))], Y[0:int(X.shape[0] * (1 - test_share - valid_share))]
+    Xval, Yval = X[int(X.shape[0] * (1 - test_share - valid_share)):int(X.shape[0] * (1 - test_share))], Y[int(X.shape[0] * (1 - test_share - valid_share)):int(X.shape[0] * (1 - test_share))]
+    Xtest, Ytest = X[int(X.shape[0] * (1 - test_share)):], Y[int(X.shape[0] * (1 - test_share)):]
+    
+    return Xtrain, Ytrain, Xval, Yval, Xtest, Ytest, n_ft, train_mean, train_std
