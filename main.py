@@ -7,7 +7,7 @@ import seaborn as sns
 import json
 import numpy as np
 from keras.models import load_model
-from sklearn.metrics import r2_score, mean_absolute_error
+from sklearn.metrics import mean_absolute_error
 
 data = clean_data('data_1.csv')
 
@@ -25,8 +25,8 @@ epochs = 100
 batch_size = 128
 # Learning rates
 lr = 0.001
-# Number of neurons in LSTM layer
-n_layer = 5
+# Number of units in LSTM layer
+units = 5
 
 Xtrain, Ytrain, Xval, Yval, Xtest, Ytest, n_ft, train_mean, train_std= transform_data(data, lag, n_ahead, test_share, val_share)
 
@@ -37,7 +37,7 @@ model = Models(
     n_outputs=n_ahead,
     n_lag=lag,
     n_ft=n_ft,
-    n_layer=n_layer,
+    units=units,
     batch=batch_size,
     epochs=epochs, 
     lr=lr,
@@ -53,13 +53,13 @@ print("complete training")
 
 model_path = "Model/model_2"
 # save models to Model
-model.save_model(model_path + "h5", history)
+model.save_model(model_path + ".h5", history)
 
 # load model from Foder Model
-models_test = load_model(model_path + "h5")
+models_test = load_model(model_path + ".h5")
 
 # Đọc lịch sử từ file JSON
-with open(model_path + 'json', 'r') as f:
+with open(model_path + '.json', 'r') as f:
     history = json.load(f)
     # Truy cập các giá trị lịch sử
     loss = history['loss'][0]
@@ -102,10 +102,10 @@ frame['temp_absolute'] = [(x * train_std['Temperature_Avg']) + train_mean['Tempe
 
 pivoted = frame.pivot_table(index='day', columns='type')
 pivoted.columns = ['_'.join(x).strip() for x in pivoted.columns.values]
-pivoted.to_csv("predict_model_2.csv")
+pivoted.to_csv(model_path + ".csv")
 
 # Đọc dữ liệu từ file CSV
-data = pd.read_csv('predict_model_2.csv')
+data = pd.read_csv(model_path + '.csv')
 
 # Lấy cột 'day' và cột 'temp_absolute_forecast'
 day = data['day']

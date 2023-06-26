@@ -12,17 +12,17 @@ import json
 
 class Models():
     
-    def __init__(self, X, Y, n_outputs, n_lag, n_ft, n_layer, batch, epochs, lr,
+    def __init__(self, X, Y, n_outputs, n_lag, n_ft, units, batch, epochs, lr,
                  Xval=None, Yval=None, mask_value=-999.0, min_delta=0.001, patience=5):
         
         lstm_input = InputLayer(input_shape=(n_lag, n_ft)).output
-        lstm_layer = LSTM(n_layer, activation='tanh')(lstm_input)
+        lstm_layer = LSTM(units, activation='tanh')(lstm_input)
         x = Dense(n_outputs)(lstm_layer)
         
         self.model = Model(inputs=lstm_input, outputs=x)
         self.batch = batch 
         self.epochs = epochs
-        self.n_layer = n_layer
+        self.units = units
         self.lr = lr 
         self.Xval = Xval
         self.Yval = Yval
