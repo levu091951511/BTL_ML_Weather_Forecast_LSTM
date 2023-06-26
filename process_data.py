@@ -5,7 +5,7 @@ import numpy as np
 import random
 import calendar
 
-def create_X_Y(ts: np.array, lag=1, n_ahead=1, target_index=0) -> tuple:
+def create_X_Y(ts: np.array, lag=30, n_ahead=1, target_index=0) -> tuple:
     n_features = ts.shape[1]
     # Creating placeholder lists
     X, Y = [], []

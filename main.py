@@ -1,12 +1,13 @@
 import matplotlib.pyplot as plt 
 import pandas as pd
-from model import R2ScoreCallback, Models
+from model import Models
 from process_data import clean_data, transform_data
 from numpy import random
 import seaborn as sns
 import json
 import numpy as np
 from keras.models import load_model
+from sklearn.metrics import r2_score, mean_absolute_error
 
 data = clean_data('data_1.csv')
 
@@ -46,27 +47,23 @@ model = Models(
 # summary model
 model.model.summary()
 
-# print("start training....")
-# history = model.train()
-# print("complete training")
+print("start training....")
+history = model.train()
+print("complete training")
 
-# # save models to Model
-# model.save_model("model_1.h5", history)
+model_path = "Model/model_2"
+# save models to Model
+model.save_model(model_path + "h5", history)
 
 # load model from Foder Model
-models_test = load_model("Model/model_1.h5")
-
-# get values history into train model
-# loss, val_loss, accuracy, val_accuracy = model.get_acc_and_loss(history)
+models_test = load_model(model_path + "h5")
 
 # Đọc lịch sử từ file JSON
-with open('Model/model.json', 'r') as f:
+with open(model_path + 'json', 'r') as f:
     history = json.load(f)
     # Truy cập các giá trị lịch sử
     loss = history['loss'][0]
     val_loss = history['val_loss'][0]
-    accuracy = history['accuracy'][0]
-    val_accuracy = history['val_accuracy'][0]
 
 n_epochs = range(len(loss))
 
@@ -80,48 +77,60 @@ plt.xlabel('Epoch')
 plt.ylabel('Loss value')
 plt.show()
 
-# ======== vẽ accuracy train và accuracy accuracy validation==========
-plt.figure(figsize=(9, 7))
-plt.plot(n_epochs, accuracy, 'r', label='Training accuracy', color='blue')
-if val_accuracy is not None:
-    plt.plot(n_epochs, val_accuracy, 'r', label='Validation accuracy', color='red')
-plt.legend(loc=0)
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy value')
-plt.show()
-
 # predict ======================================
 y_pred = models_test.predict(Xtest)
 
 # Featues used in models
 features = ['Temperature_Avg']
-# Hiển thị dự đoán và thực tế
-for i in range(len(features)):
-    plt.figure(figsize=(10, 6))
-    plt.title(f"Forecast vs Actual for {features[i]}", fontsize=14)
-    plt.plot(pd.Series(np.ravel(Ytest[:,i])), "bo", markersize=5, label="Actual")
-    plt.plot(pd.Series(np.ravel(y_pred[:,i])), "r.", markersize=5, label="Forecast")
-    plt.legend(loc="upper left")
-    plt.xlabel("Time Periods")
-    plt.show()
 
+print('MAE TEST: {:.3f}'.format(mean_absolute_error(y_pred, Ytest)))
 
 # Comparing the forecasts with the actual values
-# yhat = [x[0] for x in model.predict(Xval)]
-# y = [y[0] for y in Yval]
+yhat = [x[0] for x in models_test.predict(Xtest)]
+y = [y[0] for y in Ytest]
 
-# # Creating the frame to store both predictions
-# days = data['Date'].values[-len(y):]
+# Creating the frame to store both predictions
+days = data['Date'].values[-len(y):]
 
-# frame = pd.concat([
-#     pd.DataFrame({'day': days, 'Temperature_Avg': y, 'type': 'original'}),
-#     pd.DataFrame({'day': days, 'Temperature_Avg': yhat, 'type': 'forecast'})
-# ])
-# # frame = pd.DataFrame()
-# # Creating the unscaled values column
-# frame['temp_absolute'] = [(x * train_std['Temperature_Avg']) + train_mean['Temperature_Avg'] for x in frame['Temperature_Avg']]
+frame = pd.concat([
+    pd.DataFrame({'day': days, 'Temperature_Avg': y, 'type': 'original'}),
+    pd.DataFrame({'day': days, 'Temperature_Avg': yhat, 'type': 'forecast'})
+])
 
-# pivoted = frame.pivot_table(index='day', columns='type')
-# pivoted.columns = ['_'.join(x).strip() for x in pivoted.columns.values]
-# print(pivoted.tail(len(pivoted)))
+# Creating the unscaled values column
+frame['temp_absolute'] = [(x * train_std['Temperature_Avg']) + train_mean['Temperature_Avg'] for x in frame['Temperature_Avg']]
 
+pivoted = frame.pivot_table(index='day', columns='type')
+pivoted.columns = ['_'.join(x).strip() for x in pivoted.columns.values]
+pivoted.to_csv("predict_model_2.csv")
+
+# Đọc dữ liệu từ file CSV
+data = pd.read_csv('predict_model_2.csv')
+
+# Lấy cột 'day' và cột 'temp_absolute_forecast'
+day = data['day']
+temp_forecast = data['temp_absolute_forecast']
+temp_original = data['temp_absolute_original']
+
+# Tạo biểu đồ đường
+plt.plot(day, temp_forecast, label='Forecast')
+plt.plot(day, temp_original, label='Original')
+
+# Đặt tên cho trục x và y, và tiêu đề cho biểu đồ
+plt.xlabel('Day')
+plt.ylabel('Temperature')
+plt.title('Temperature Forecast vs Original')
+
+# Tạo mảng các vị trí trên trục hoành và nhãn tương ứng
+step = 100
+xticks_positions = np.arange(0, len(day), step)
+xticks_labels = day[::step]
+
+# Đặt các vị trí và nhãn trên trục hoành
+plt.xticks(xticks_positions, xticks_labels)
+
+# Hiển thị chú thích cho các đường
+plt.legend()
+
+# Hiển thị biểu đồ
+plt.show()
